@@ -1,8 +1,13 @@
 {
   "name": "StatsdProxyServer",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "dependencies": {
     "express": "3.3.4",
-    "statsd-client": "0"
+    "statsd-client": "0",
+    "mocha": "0",
+    "sinon-mocha": "0",
+    "needle": "0",
+    "yaml-config": "0",
+    "request": "0"
   }
 }

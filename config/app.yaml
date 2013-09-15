@@ -1,0 +1,8 @@
+default:
+  server:
+    statsd_host: 'my.statsd.server'
+    statsd_port: 8125
+    server_host: '127.0.0.1'
+    server_port_start: 8080
+    server_ports: 24
+

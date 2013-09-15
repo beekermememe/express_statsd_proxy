@@ -1,15 +1,12 @@
 var express = require('express');
 var myWebApp = express();
+var config = require('yaml-config');
 
-var STATSD_HOST = 'int-radish01-statsd02.dishonline.com';
-var STATSD_PORT = 8125;
-
-var SERVE_HOST = '127.0.0.1'
-var SERVE_PORT = 8082
+var settings = config.readConfig(__dirname + '/config/app.yaml');
 
 sdc = require('statsd-client'),
 SDC = new sdc({
-    host: STATSD_HOST, port: STATSD_PORT});
+    host: settings.server.statsd_host, port: settings.server.statsd_port});
 
 function dt(){
     d = new Date();
@@ -20,7 +17,7 @@ function dt(){
 		d.getMinutes()].join(':');
 }
 
-console.log(dt() + ' statsd-proxy starting; statsd is ' + STATSD_HOST + ':' + STATSD_PORT + '...');
+console.log(dt() + ' statsd-proxy starting; statsd is ' + settings.server.statsd_host + ':' + settings.server.statsd_port + '...');
 
 myWebApp.enable('trust proxy')
 
@@ -59,19 +56,10 @@ myWebApp.get('/', function(request,response) {
 })
 
 myWebApp.post('/log_stats',function(request,response) {
-  var data = request.body
-  console.log("bdy " + Object.getOwnPropertyNames(request.body));
-
-  if(request.body !== null && request.body !== undefined) {
-    console.log(request.body.stat_type + "Req body : " + request.body.stat_path + " : " + request.body.stat_value);
-  } 
+  var data = request.body 
 
   if (data.stat_path === undefined || data.stat_type === undefined || data.stat_value === undefined) {
-    console.info("Undefined data points : " + data.stat_path + " : " + + data.stat_type + ":" + data.stat_value + "|" + body_data);
-    response.setHeader('Content-Type', 'application/json');
-    response.writeHeader('Status','400');
-    response.write('{"status":"Error - failed to pass all stats info to api"}')
-    response.end();
+    response.send(400,{"status": "error","description" : "failed to pass all stats info to api"});
     return;
   }
   
@@ -89,10 +77,10 @@ myWebApp.post('/log_stats',function(request,response) {
             SDC.gauge(data.stat_path, data.stat_value);
             break;
   }
-  response.setHeader('Content-Type', 'application/json');
-  response.writeHeader('Status','200');
-  response.write('{"status":"success"}')
-  response.end(); 
+  response.send(200,{"status": "success","description" : "successfully sent on stat to statsd server"});
 })
 
-myWebApp.listen(8082);
+for(i=0;i<settings.server.server_ports;i++){
+  console.log("Listen on port " + (settings.server.server_port_start+i));
+  myWebApp.listen(settings.server.server_port_start+i);
+}
